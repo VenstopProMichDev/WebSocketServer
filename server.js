@@ -2,13 +2,21 @@ const WebSocket = require('ws');
 
 const PORT = process.env.PORT || 8080; // Railway автоматично видає PORT
 const server = new WebSocket.Server({ port: PORT });
+var lastMessage = "";
 
 server.on('connection', (socket) => {
     console.log('Новий клієнт підключився');
 
     socket.on('message', (message) => {
         const textMessage = message.toString();
+
+        if(lastMessage == textMessage)
+        {
+            return;
+        }
+        
         console.log('Отримано:', textMessage);
+        lastMessage = textMessage;
 
         // Відправка всім клієнтам, крім відправника
         server.clients.forEach(client => {
