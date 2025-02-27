@@ -1,6 +1,6 @@
 const WebSocket = require('ws');
 
-const PORT = process.env.PORT || 8080; // Railway автоматично видає PORT
+const PORT = process.env.PORT; // Railway автоматично видає PORT
 const server = new WebSocket.Server({ port: PORT });
 var lastMessage = "";
 
@@ -20,9 +20,7 @@ server.on('connection', (socket) => {
 
         // Відправка всім клієнтам, крім відправника
         server.clients.forEach(client => {
-            if (client !== socket && client.readyState === WebSocket.OPEN) {
-                client.send(textMessage);
-            }
+            client.send(textMessage);
         });
     });
 
