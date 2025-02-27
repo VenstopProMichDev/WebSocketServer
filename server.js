@@ -20,7 +20,9 @@ server.on('connection', (socket) => {
 
         // Відправка всім клієнтам, крім відправника
         server.clients.forEach(client => {
-            client.send(textMessage);
+            if (client !== socket && client.readyState === WebSocket.OPEN) {
+                client.send(textMessage);
+            }
         });
     });
 
