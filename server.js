@@ -1,36 +1,20 @@
 const WebSocket = require('ws');
 
-const PORT = process.env.PORT || 8080; // Railway автоматично видає PORT, а локально 3000
+const PORT = process.env.PORT || 3000;
 const server = new WebSocket.Server({ port: PORT });
 
-let rooms = {}; // Об'єкт для зберігання кімнат
+let rooms = {}; // Список кімнат
 
 server.on('connection', (socket) => {
     console.log('Новий клієнт підключився');
-
-    let assignedRoom = null;
-
-    // Знайти вільну кімнату або створити нову
-    for (let roomId in rooms) {
-        if (rooms[roomId].length < 2) {
-            assignedRoom = roomId;
-            rooms[roomId].push(socket);
-            break;
-        }
-    }
-
-    if (!assignedRoom) {
-        assignedRoom = `room-${Object.keys(rooms).length + 1}`;
-        rooms[assignedRoom] = [socket];
-    }
-
-    console.log(`Клієнт приєднався до ${assignedRoom}`);
+    
+    let roomId = findOrCreateRoom(socket);
 
     socket.on('message', (message) => {
-        console.log(`Отримано від ${assignedRoom}:`, message.toString());
+        console.log(`Повідомлення від ${roomId}:`, message.toString());
 
-        // Надсилати повідомлення тільки іншим клієнтам у кімнаті
-        rooms[assignedRoom].forEach(client => {
+        // Відправка всім у кімнаті
+        rooms[roomId].forEach(client => {
             if (client !== socket && client.readyState === WebSocket.OPEN) {
                 client.send(message.toString());
             }
@@ -38,17 +22,43 @@ server.on('connection', (socket) => {
     });
 
     socket.on('close', () => {
-        console.log(`Користувач покинув ${assignedRoom}`);
+        console.log(`Гравець покинув кімнату ${roomId}`);
+        rooms[roomId] = rooms[roomId].filter(client => client !== socket);
 
-        // Видалити клієнта з кімнати
-        rooms[assignedRoom] = rooms[assignedRoom].filter(client => client !== socket);
-
-        // Видалити кімнату, якщо вона порожня
-        if (rooms[assignedRoom].length === 0) {
-            delete rooms[assignedRoom];
-            console.log(`Кімната ${assignedRoom} закрита`);
+        if (rooms[roomId].length === 0) {
+            delete rooms[roomId]; // Видалити порожню кімнату
+            console.log(`Кімнату ${roomId} закрито`);
         }
     });
 });
+
+function findOrCreateRoom(socket) {
+    // Шукаємо кімнату з одним гравцем
+    for (let room in rooms) {
+        if (rooms[room].length === 1) {
+            rooms[room].push(socket);
+            console.log(`Гравець приєднався до кімнати ${room}`);
+
+            // Повідомляємо гравців, що гра почалася
+            rooms[room].forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({ event: "game_start", room: room }));
+                }
+            });
+
+            return room;
+        }
+    }
+
+    // Якщо вільної кімнати немає, створюємо нову
+    let newRoomId = generateRoomId();
+    rooms[newRoomId] = [socket];
+    console.log(`Створено нову кімнату: ${newRoomId}`);
+    return newRoomId;
+}
+
+function generateRoomId() {
+    return Math.random().toString(36).substr(2, 6); // Випадковий ідентифікатор
+}
 
 console.log(`WebSocket-сервер запущено на порту ${PORT}`);
