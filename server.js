@@ -42,7 +42,7 @@ function findOrCreateRoom(socket) {
             // Повідомляємо гравців, що гра почалася
             rooms[room].forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify({ event: "game_start", room: room }));
+                    client.send("Ready");
                 }
             });
 
