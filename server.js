@@ -1,21 +1,20 @@
 const WebSocket = require('ws');
 
-const server = new WebSocket.Server({ port: 8080 });
-var lastMessage = '';
+const PORT = process.env.PORT || 8080; // Railway автоматично видає PORT
+const server = new WebSocket.Server({ port: PORT });
 
 server.on('connection', (socket) => {
     console.log('Новий клієнт підключився');
 
     socket.on('message', (message) => {
         const textMessage = message.toString();
-        if(lastMessage == textMessage)
-            return;
         console.log('Отримано:', textMessage);
-        lastMessage = textMessage;
 
-        // Пересилаємо отримане повідомлення ВСІМ клієнтам (окрім відправника)
+        // Відправка всім клієнтам, крім відправника
         server.clients.forEach(client => {
-            client.send(textMessage);
+            if (client !== socket && client.readyState === WebSocket.OPEN) {
+                client.send(textMessage);
+            }
         });
     });
 
@@ -24,4 +23,4 @@ server.on('connection', (socket) => {
     });
 });
 
-console.log('Сервер WebSocket запущено на порту 8080');
+console.log(`WebSocket-сервер запущено на порту ${PORT}`);

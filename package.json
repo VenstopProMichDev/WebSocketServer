@@ -1,15 +1,12 @@
 {
-  "name": "multiplayerserver",
+  "name": "websocket-server",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "WebSocket сервер на Railway",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "ws": "^8.18.0"
+    "ws": "^8.15.0"
   }
 }
