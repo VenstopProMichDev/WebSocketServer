@@ -23,10 +23,21 @@ server.on('connection', (socket) => {
 
     socket.on('close', () => {
         console.log(`Гравець покинув кімнату ${roomId}`);
+        
+        // Фільтруємо кімнату, видаляючи гравця
         rooms[roomId] = rooms[roomId].filter(client => client !== socket);
 
+        // Якщо залишився один гравець, повідомляємо його
+        if (rooms[roomId].length === 1) {
+            let remainingPlayer = rooms[roomId][0];
+            if (remainingPlayer.readyState === WebSocket.OPEN) {
+                remainingPlayer.send("PlayerIsExit");
+            }
+        }
+
+        // Якщо кімната спорожніла — видаляємо її
         if (rooms[roomId].length === 0) {
-            delete rooms[roomId]; // Видалити порожню кімнату
+            delete rooms[roomId];
             console.log(`Кімнату ${roomId} закрито`);
         }
     });
@@ -39,10 +50,10 @@ function findOrCreateRoom(socket) {
             rooms[room].push(socket);
             console.log(`Гравець приєднався до кімнати ${room}`);
 
-            // Повідомляємо гравців, що гра почалася
+            // Повідомляємо обох гравців, що гра почалася
             rooms[room].forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
-                    client.send("Ready");
+                    client.send("GameReady");
                 }
             });
 
