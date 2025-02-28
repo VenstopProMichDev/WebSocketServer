@@ -65,6 +65,12 @@ function findOrCreateRoom(socket) {
     let newRoomId = generateRoomId();
     rooms[newRoomId] = [socket];
     console.log(`Створено нову кімнату: ${newRoomId}`);
+    // Повідомляємо обох гравців, що гра почалася
+    rooms[newRoomId].forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send("FirstPlayer");
+        }
+    });
     return newRoomId;
 }
 
